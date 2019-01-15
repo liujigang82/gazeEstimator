@@ -38,7 +38,6 @@ class LeftEyeModel(nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        print("x size:", x.shape)
         x = self.fc(x)
         return x
 

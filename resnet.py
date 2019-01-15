@@ -164,7 +164,6 @@ def resnet18(pretrained=False, **kwargs):
         model.load_state_dict(model_zoo.load_url(model_urls['resnet18']))
     return model
 
-
 def resnet34(pretrained=False, **kwargs):
     """Constructs a ResNet-34 model.
 

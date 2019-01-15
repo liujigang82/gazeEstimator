@@ -20,9 +20,7 @@ Author: Liu Jigang ( liujg@ntu.edu.sg).
 '''
 
 
-def main():
-    global args, best_prec1, weight_decay, momentum
-
+def main(img_path):
     model = EyeGazeEstimatorModel()
     model = torch.nn.DataParallel(model)
     model.cuda()
@@ -30,8 +28,7 @@ def main():
 
     saved = load_checkpoint()
     if saved:
-        print('Loading checkpoint for epoch %05d with loss %.5f (which is L2 = mean of squares)...' % (saved['epoch']
-                                                                                                           , saved['best_prec1']))
+        print('Loading checkpoint..... ')
         state = saved['state_dict']
         try:
             model.module.load_state_dict(state)
@@ -39,10 +36,7 @@ def main():
             model.load_state_dict(state)
     else:
         print('Warning: Could not read checkpoint!')
-
-    imEyeL, imEyeR, leftEyeGrid, rightEyeGrid = load_data("/home/jigang/data/GazeCaputreData/00006/frames/00000.jpg")
-    print(imEyeL.shape, imEyeR.shape, leftEyeGrid.shape, rightEyeGrid.shape)
-
+    imEyeL, imEyeR, leftEyeGrid, rightEyeGrid = load_data(img_path)
     validate(model, imEyeL, imEyeR, leftEyeGrid, rightEyeGrid)
     return
 
@@ -50,6 +44,18 @@ def main():
 def validate(model, imEyeL, imEyeR, leftEyeGrid, rightEyeGrid):
     # switch to evaluate mode
     model.eval()
+
+    imEyeL = imEyeL.cuda(async=True)
+    imEyeR = imEyeR.cuda(async=True)
+    leftEyeGrid = leftEyeGrid.cuda(async=True)
+    rightEyeGrid = rightEyeGrid.cuda(async=True)
+
+    imEyeL = torch.autograd.Variable(imEyeL)
+    imEyeR = torch.autograd.Variable(imEyeR)
+    leftEyeGrid = torch.autograd.Variable(leftEyeGrid)
+    rightEyeGrid = torch.autograd.Variable(rightEyeGrid)
+
+
     output = model(imEyeL, imEyeR, leftEyeGrid, rightEyeGrid)
     print(output)
     return output
@@ -68,5 +74,5 @@ def load_checkpoint(filename='checkpoint.pth.tar'):
 
 
 if __name__ == "__main__":
-    main()
+    main("/home/jigang/data/GazeCaputreData/00006/frames/00000.jpg")
     print('DONE')

@@ -5,6 +5,7 @@ from PIL import Image
 import cv2
 import numpy as np
 import face_alignment
+import torch
 
 MEAN_PATH = './data/'
 gridSize = [50, 50]
@@ -21,25 +22,6 @@ def loadMetadata(filename, silent=False):
     return metadata
 
 
-class SubtractMean(object):
-    """Normalize an tensor image with mean.
-    """
-
-    def __init__(self, meanImg):
-        trans_gray = transforms.Grayscale(num_output_channels=1)
-        gray_mean = trans_gray(Image.fromarray(np.uint8(meanImg)))
-        self.meanImg = transforms.ToTensor()(gray_mean)
-
-    def __call__(self, tensor):
-        """
-        Args:
-            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-        Returns:
-            Tensor: Normalized image.
-        """
-        return tensor.sub(self.meanImg)
-
-
 def get_image_dim(image_name):
     image = cv2.imread(image_name)
     height, width = image.shape[:2]
@@ -53,16 +35,17 @@ def load_eye_image(image, imSize=(224, 224), left=True):
     else:
         eyeMean = loadMetadata(os.path.join(MEAN_PATH, 'mean_right_224.mat'))['image_mean']
 
-    print("eyeMean", eyeMean.shape)
-    # image = Image.open(image_name).convert('RGB')
     transformEye = transforms.Compose([
-        transforms.Scale(imSize),
+        transforms.Resize(imSize),
         transforms.Grayscale(num_output_channels=1),
         transforms.ToTensor(),
-        SubtractMean(meanImg=eyeMean),
     ])
     imEye = transformEye(image)
-    print("imEye", imEye.shape)
+
+    trans_gray = transforms.Grayscale(num_output_channels=1)
+    eye_mean = trans_gray(Image.fromarray(np.uint8(eyeMean)))
+    meanImg = transforms.ToTensor()(eye_mean)
+    imEye = imEye.sub(meanImg)
     return imEye
 
 
@@ -86,7 +69,6 @@ def cutArea(image, x_list, y_list, offset=0.5):
     # top, bottom, left, right
     return max(0, center_y - offset), min(height - 1, center_y + offset), max(0, center_x - offset), min(width - 1,
                                                                                                          center_x + offset)
-
 
 def extractEyeArea(image, landmarks):
     r_pointX = []
@@ -166,12 +148,14 @@ def get_eye_grid(frameW, frameH, gridW, gridH, labelFaceX, labelFaceY, labelFace
 
 
 def load_data(image_name):
+    #Image.fromarray(np.uint8(meanImg)
     height, width = get_image_dim(image_name)
     r_eye_img, l_eye_img, r_box, l_box = find_and_save_eyes(image_name)
-    r_img = load_eye_image(Image.fromarray(r_eye_img), left=False)
-    l_img = load_eye_image(Image.fromarray(l_eye_img), left=True)
+    r_img = load_eye_image(Image.fromarray(np.uint8(r_eye_img)), left=False)
+    l_img = load_eye_image(Image.fromarray(np.uint8(l_eye_img)), left=True)
 
     l_eye_grid = get_eye_grid(width, height, gridSize[0], gridSize[1], l_box[2], l_box[0], l_box[3]-l_box[2]+1, l_box[1]-l_box[0]+1)
+    l_eye_grid = torch.FloatTensor(l_eye_grid)
     r_eye_grid = get_eye_grid(width, height, gridSize[0], gridSize[1], r_box[2], r_box[0], r_box[3]-r_box[2]+1, r_box[1]-r_box[0]+1)
-
-    return l_img, r_img, l_eye_grid, r_eye_grid
+    r_eye_grid = torch.FloatTensor(r_eye_grid)
+    return l_img.unsqueeze_(0), r_img.unsqueeze_(0), l_eye_grid.unsqueeze_(0), r_eye_grid.unsqueeze_(0)
