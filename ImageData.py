@@ -118,8 +118,8 @@ def find_and_save_eyes(image_name):
 
     r_eye_img, l_eye_img, r_box, l_box = extractEyeArea(image, face_landmarks_list)
 
-    cv2.imwrite("leftEeye.jpg", l_eye_img)
-    cv2.imwrite("rightEye.jpg", r_eye_img)
+    #cv2.imwrite("leftEeye.jpg", l_eye_img)
+    #cv2.imwrite("rightEye.jpg", r_eye_img)
     return r_eye_img, l_eye_img, r_box, l_box
 
 
