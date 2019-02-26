@@ -10,6 +10,8 @@ import torch
 MEAN_PATH = './data/'
 gridSize = [50, 50]
 
+ratio = np.tan(54.4*np.pi/360)/np.tan(70*np.pi/360)
+
 def loadMetadata(filename, silent=False):
     try:
         # http://stackoverflow.com/questions/6273634/access-array-contents-from-a-mat-file-loaded-using-scipy-io-loadmat-python
@@ -116,6 +118,8 @@ def find_and_save_eyes(image_name):
 
     r_eye_img, l_eye_img, r_box, l_box = extractEyeArea(image, face_landmarks_list)
 
+    cv2.imwrite("leftEeye.jpg", l_eye_img)
+    cv2.imwrite("rightEye.jpg", r_eye_img)
     return r_eye_img, l_eye_img, r_box, l_box
 
 
@@ -137,6 +141,22 @@ def get_eye_grid(frameW, frameH, gridW, gridH, labelFaceX, labelFaceY, labelFace
     scaleX = gridW / frameW
     scaleY = gridH / frameH
 
+    center_x = labelFaceX + labelFaceW/2
+    center_y = labelFaceY + labelFaceH/2
+
+    frame_center_x = frameW/2
+    frame_center_y = frameH/2
+
+    center_x = frame_center_x - (frame_center_x - center_x)/ratio
+    center_y = frame_center_y - (frame_center_y - center_y) / ratio
+
+
+    labelFaceW = labelFaceW/ratio
+    labelFaceH = labelFaceH/ratio
+
+    labelFaceX = center_x - labelFaceW/2
+    labelFaceY = center_y - labelFaceH/2
+
     xLo = round(labelFaceX * scaleX) + 1
     yLo = round(labelFaceY * scaleY) + 1
     w = round(labelFaceW * scaleX)
@@ -148,6 +168,7 @@ def get_eye_grid(frameW, frameH, gridW, gridH, labelFaceX, labelFaceY, labelFace
 
 
 def load_data(image_name):
+    print("ratio:", ratio)
     #Image.fromarray(np.uint8(meanImg)
     height, width = get_image_dim(image_name)
     r_eye_img, l_eye_img, r_box, l_box = find_and_save_eyes(image_name)

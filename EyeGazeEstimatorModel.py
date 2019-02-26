@@ -5,6 +5,7 @@ import torch.nn.parallel
 import torch.optim
 import torch.utils.data
 
+import numpy as np
 '''
 
 Train/test code for Eye Gaze Tracker.
@@ -23,7 +24,6 @@ class ImageModel(nn.Module):
         x = self.features(x)
         x = x.view(x.size(0), -1)
         return x
-
 
 class LeftEyeModel(nn.Module):
     def __init__(self):

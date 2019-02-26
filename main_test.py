@@ -36,8 +36,11 @@ def main(img_path):
             model.load_state_dict(state)
     else:
         print('Warning: Could not read checkpoint!')
+    time_start = time.time()
     imEyeL, imEyeR, leftEyeGrid, rightEyeGrid = load_data(img_path)
+    print('load data time is : {running_time:.3f}'.format(running_time=time.time() - time_start))
     validate(model, imEyeL, imEyeR, leftEyeGrid, rightEyeGrid)
+    print('total time is : {running_time:.3f}'.format(running_time=time.time() - time_start))
     return
 
 
@@ -74,5 +77,5 @@ def load_checkpoint(filename='checkpoint.pth.tar'):
 
 
 if __name__ == "__main__":
-    main("/home/jigang/data/GazeCaputreData/00006/frames/00000.jpg")
+    main("000005.png")
     print('DONE')
